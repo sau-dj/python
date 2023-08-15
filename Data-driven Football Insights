@@ -1,0 +1,98 @@
+f
+rom dotenv import load_dotenv
+import os
+import requests
+from bs4 import BeautifulSoup
+from supabase_py import create_client
+
+# Load environment variables
+load_dotenv()
+
+    # Connect to Supabase
+url = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_KEY")
+supabase = create_client(url, key)
+
+    # Delete rows from 'PL' table with specific Pos values
+table_name = 'PL'
+pos_values = ['1', '2', '3', '4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20']  # List of Pos values to delete
+
+success = True  # Flag variable to track overall success
+
+for pos in pos_values:
+    try:
+        response = supabase.table(table_name).delete().eq('Pos', pos).execute()
+        if isinstance(response, dict) and 'status_code' in response and response['status_code'] == 200:
+            print(f"Successfully deleted row with Pos={pos}")
+        elif isinstance(response, dict) and 'error' in response:
+            print(f"Failed to delete row with Pos={pos}: {response['error']['message']}")
+            success = False  # Set flag to False if deletion fails
+        else:
+            print(f"Failed to delete row with Pos={pos}: Unknown error")
+            success = False  # Set flag to False if deletion fails
+    except Exception as e:
+        print(f"Error deleting row with Pos={pos}: {str(e)}")
+        success = False  # Set flag to False if an exception occurs
+
+if success:
+    print("All rows processed successfully.")
+
+# Send a GET request to the webpage
+url = "https://native-stats.org/competition/SA"
+response = requests.get(url)
+
+# Create a BeautifulSoup object
+soup = BeautifulSoup(response.content, "html.parser")
+
+# Find the table containing the Premier League Season 2021/22 data
+table = soup.find("table")
+
+
+# Extract the table headers
+headers = [th.text.strip() for th in table.find_all("th")]
+# Adjust the column names to match the table structure
+column_names = ["Pos", "Team", "Matches", "Points", "Goals + / -", "Scored Goals", "Conceded Goals"]
+
+print("Headers:", headers)
+print("Column Names:", column_names)
+
+
+
+# Extract the table rows
+rows = []
+for tr in table.find_all("tr"):
+    row = [td.text.strip() for td in tr.find_all("td")]
+    if row:
+        rows.append(row)
+
+# Remove extra part from each team's name
+for row in rows:
+    team_name = row[1].split('\n')[0]  # Split the string and take the first part
+    row[1] = team_name
+
+# Define the mapping between headers and column names
+column_mapping = {
+    "Pos": "Pos",
+    "Team": "Team",
+    "Matches": "Matches",
+    "Points": "Points",
+    "Goals +/-": "Goals_plus_minus",
+    "Scored Goals": "Scored_Goals",
+    "Conceded Goals": "Conceded_Goals"
+    }
+
+# Insert the data into Supabase
+table_name = "PL"
+data = []
+for row in rows:
+    mapped_row = {column_mapping[header]: value for header, value in zip(headers, row)}
+    data.append(mapped_row)
+
+try:
+    response = supabase.table(table_name).insert(data).execute()
+    if response["status_code"] == 201:
+        print("Successfully inserted data into Supabase")
+    else:
+        print("Failed to insert data into Supabase:", response)
+except Exception as e:
+    print("Error inserting data into Supabase:", str(e))

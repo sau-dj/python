@@ -66,14 +66,14 @@ def summary():
     }
 
 
-@app.route('/data')  # Route for retrieving data based on user input
-def data():
-    """Retrieve data based on user input"""
+#@app.route('/data')  # Route for retrieving data based on user input
+#def data():
+    #"""Retrieve data based on user input"""
     # Here we want to get the value of user (i.e. ?user=some-value)
-    user = request.args.get('user')  # Retrieving user input parameter from request
+    # user = request.args.get('user')  # Retrieving user input parameter from request
 
 
-labels = ['Province_State', 'Country_Region', 'Last_Update', 'Confirmed', 'Deaths', 'Recovered']  # List of labels
+#labels = ['Province_State', 'Country_Region', 'Last_Update', 'Confirmed', 'Deaths', 'Recovered']  # List of labels
 
 app.run()  # Running the Flask application
 

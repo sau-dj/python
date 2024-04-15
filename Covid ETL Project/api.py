@@ -13,14 +13,9 @@ def country():
     """Retrieve covid statistics per country"""
     conn = sqlite3.connect(f"{db_name}.db")  # Connecting to the SQLite database
     c = conn.cursor()  # Creating a cursor object
+    
     # Executing SQL query to get covid statistics per country
-    c.execute(
-        """
-         SELECT country_region, SUM(Confirmed), DATE(last_update) AS last_update 
-         FROM covid_data GROUP BY country_region, last_update 
-         ORDER BY last_update;
 
-     """)
     c.execute(
         """select Country_Region, sum(Confirmed), sum(deaths), sum(recovered) 
         from covid_data 
